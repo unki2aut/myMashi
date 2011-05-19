@@ -1,0 +1,5 @@
+lokales ausführen von myMashi:
+
+#1 cd mymashi
+#2 sbt update ~jetty-run
+#3 localhost:8080 im Browser aufrufen
