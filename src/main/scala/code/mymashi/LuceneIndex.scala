@@ -127,7 +127,7 @@ object LuceneIndex extends Logger {
 
       is.close
 
-      result
+      result.filter(_.score > 1.0)
     } catch {
       case ioX: IOException => error(ioX.getMessage); Seq()
       case asX: AlreadySetException => error(asX.getMessage); Seq()
