@@ -1,3 +1,7 @@
+create mymashi.war:
+sbt package (Project extends DefaultWebProject)
+
+
 lokales ausführen von myMashi:
 
 #1 cd mymashi

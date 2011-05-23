@@ -1,33 +1,30 @@
-package code {
-package snippet {
+package code.snippet
 
+import _root_.code.mymashi.source.Item
 import net.liftweb._
+import common.{Logger, Full}
 import http._
-import js.JsCmds.SetValById._
 import util.Helpers._
 import js._
 import JsCmds._
 import JE._
 import js.jquery.JqJsCmds.{AppendHtml, FadeOut, Hide, FadeIn}
 import scala.xml._
-import at.tuwien.mymashi._
-import java.net.URL
-import java.text.SimpleDateFormat
 import xml.NodeSeq._
 import java.util.Date
-import com.sun.syndication.io.impl.DateParser
-import net.liftweb.util.TimeHelpers
 import scala.math._
+import _root_.code.mymashi.{LuceneIndex, XmlSource}
 
 
-final case class Feed(var url: String, var keywords: String, var source: XmlSource = null,
-                      guid: String = nextFuncName, var date: Date = new Date())
+case class Feed(var url: String, var keywords: String, var source: XmlSource = null) {
+  val guid: String = nextFuncName
 
-case class Article(title: String, description: String, date: Date, favicon: String)
+  override def toString = "url: "+url+", keywords: "+keywords+", exists: "+source.exists
+}
 
 // class -> new per request
 // object -> new per restart and for all users
-class AjaxTargetUrls {
+class AjaxTargetUrls extends Logger {
   private var urls = Vector(new Feed("", ""))
 
   def render(html: NodeSeq): NodeSeq = {
@@ -55,13 +52,21 @@ class AjaxTargetUrls {
     <div id={f.guid}>
       url: {
         SHtml.ajaxText(f.url, u => {
-          if(checkUrl(u, f)) {
-            SetValById(f.guid+"_url", Str(f.url)) & SetHtml(f.guid+"_err", NodeSeq.Empty)
+          if(u.length == 0) {
+            Noop
+          } else if(checkUrl(u, f)) {
+            f.source.content match {
+              case Some(c) => {
+                LuceneIndex.indexSource(f)
+                SetValById(f.guid+"_url", Str(f.url)) & SetHtml(f.guid+"_err", NodeSeq.Empty)
+              }
+              case None => SetValById(f.guid+"_url", Str(f.url)) & SetHtml(f.guid+"_err", Text("Couldn't load Source"))
+            }
           } else {
             SetValById(f.guid+"_url", Str(f.url)) & SetHtml(f.guid+"_err", Text("URL not valid"))
           }
         },
-        "id" -> (f.guid+"_url"), "size" -> "50")
+        "id" -> (f.guid+"_url"), "size" -> "30")
       }
       keywords: {
         SHtml.ajaxText(f.keywords, k => {
@@ -80,54 +85,9 @@ class AjaxTargetUrls {
 
   private def renderResults(): NodeSeq = {
     // show the result
-    urls.filter(_.source != null).flatMap(c => {
-      val kw = tokenizeKeywords(c.keywords.toLowerCase)
-      convertFeed(c.source.content).filter(filterKeywords(_, kw))
-    }).sortWith((a1, a2) => a1.date.compareTo(a2.date) > 0).flatMap(renderArticle)
-  }
-
-  private def convertFeed(content: NodeSeq): Seq[Article] = {
-    val root = content.head
-
-    (root, root.label) match {
-      case (rss, "rss") => convertRss(rss)
-      case (atom, "feed") => convertAtom(atom)
-      case (html, "html") => Seq(new Article("HTML page found", trimHtml(html), TimeHelpers.now, "images/news.ico"))
-      case (other, _) => Seq(new Article("Different source", trimHtml(other), TimeHelpers.now, "images/news.ico"))
-    }
-  }
-
-  private def renderArticle(article: Article): NodeSeq = {
-    <div>
-      <strong><img src={article.favicon} /> {article.title} on {fromDate(article.date)}</strong>
-      <p>{article.description}</p>
-    </div>
-  }
-
-  private def filterKeywords(article: Article, kw: List[String]): Boolean = {
-     kw.exists((article.title+" "+article.description).toLowerCase.contains)
-  }
-
-  private def tokenizeKeywords(kw: String): List[String] = {
-    kw.split("""\s+""").toList
-  }
-
-  private def convertRss(c: NodeSeq): Seq[Article] = {
-    val title = c \ "title" text
-
-    c \\ "item"  map(item => {
-      val iTitle = mergeTitle(title, item \ "title" text)
-      new Article(iTitle, item \ "description" text, DateParser.parseDate(item \ "pubDate" text), "images/news.ico")
-    })
-  }
-
-  private def convertAtom(c: NodeSeq): Seq[Article] = {
-    val title = c \ "title" text
-
-    c \\ "entry"  map(item => {
-      val iTitle = mergeTitle(title, item \ "title" text)
-      new Article(iTitle, item \ "summary" text, DateParser.parseDate(item \ "updated" text), "images/news.ico")
-    })
+    // TODO: this might not be save, check keywords
+    urls.filter(_.source != null).flatMap(f => LuceneIndex.search(f))
+      .sortWith((i1, i2) => sort(i1,i2)).flatMap(_.toHtml)
   }
 
   private def checkUrl(url: String, feed: Feed): Boolean = {
@@ -143,8 +103,13 @@ class AjaxTargetUrls {
     feed.source.exists
   }
 
-  private def fromDate(date: Date): String = {
-    new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(date)
+  private def sort(i1: Item, i2: Item): Boolean = {
+    if(i1.updated == null || i2.updated == null) {
+      warn("sort: updated is null")
+      false
+    } else {
+      i1.updated.after(i2.updated)
+    }
   }
 
   private def mergeTitle(t1: String, t2: String): String = {
@@ -159,7 +124,5 @@ class AjaxTargetUrls {
   }
 }
 
-}
-}
 
 

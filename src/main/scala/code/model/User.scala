@@ -2,7 +2,6 @@ package code {
 package model {
 
 import _root_.net.liftweb.mapper._
-import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 
 /**

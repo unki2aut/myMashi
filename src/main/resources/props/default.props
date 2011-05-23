@@ -1,0 +1,4 @@
+db.driver=com.mysql.jdbc.Driver
+db.url=jdbc:mysql://localhost:3306/mymashi
+db.user=mymashi
+db.password=zs8w4pxf
