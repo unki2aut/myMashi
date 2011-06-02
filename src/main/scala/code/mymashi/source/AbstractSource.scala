@@ -7,6 +7,7 @@ import com.sun.syndication.io.impl.DateParser
 import net.liftweb.util.TimeHelpers
 import xml._
 import net.liftweb.common.{Full, Box}
+import main.scala.code.mymashi.source.HtmlUtil
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,6 +40,8 @@ abstract class Source {
     infoSrc.cache(cache.mkString)
     infoSrc.save
   }
+
+  override def toString = "url: "+url+", updated: "+updated
 }
 
 object Source {
@@ -71,11 +74,13 @@ class Item(val url: String,
            val guid: String,
            val title: String,
            val link: String,
-           val content: String,
+           private val c: String,
            val updated: Date,
            val image: String,
            val cache: NodeSeq,
            val score: Float = 0) {
+
+  val content = HtmlUtil.extractText(c)
 
   def toHtml: Node = {
     <div>

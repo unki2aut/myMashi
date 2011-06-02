@@ -13,6 +13,7 @@ class LiftProject(info: ProjectInfo) extends DefaultWebProject(info) { //with Pr
   override def libraryDependencies = Set(
     "net.liftweb" %% "lift-webkit" % liftVersion % "compile->default",
     "net.liftweb" %% "lift-mapper" % liftVersion % "compile->default",
+    "net.liftweb" %% "lift-widgets" % liftVersion % "compile->default",
     "org.mortbay.jetty" % "jetty" % "6.1.22" % "test->default",
     "junit" % "junit" % "4.5" % "test->default",
     "ch.qos.logback" % "logback-classic" % "0.9.26",
@@ -21,7 +22,8 @@ class LiftProject(info: ProjectInfo) extends DefaultWebProject(info) { //with Pr
     "org.scalatest" %% "scalatest" % "1.5.RC2" % "test->default",
     "rome" % "rome" % "0.9",
     "org.apache.lucene" % "lucene-core" % "3.1.0",
-    "mysql" % "mysql-connector-java" % "5.1.16"
+    "mysql" % "mysql-connector-java" % "5.1.16",
+    "org.ccil.cowan.tagsoup" % "tagsoup" % "1.2"
   ) ++ super.libraryDependencies
 
   /* override def proguardOptions = List(

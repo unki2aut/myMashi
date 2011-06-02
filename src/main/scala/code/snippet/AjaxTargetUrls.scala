@@ -1,19 +1,22 @@
 package code.snippet
 
-import _root_.code.mymashi.source.Item
+import _root_.code.model.InformationSource
+import _root_.code.mymashi.source._
 import net.liftweb._
-import common.{Logger, Full}
+import common.Logger
 import http._
+import mapper._
 import util.Helpers._
 import js._
 import JsCmds._
 import JE._
 import js.jquery.JqJsCmds.{AppendHtml, FadeOut, Hide, FadeIn}
-import scala.xml._
-import xml.NodeSeq._
-import java.util.Date
+import scala.xml.NodeSeq._
 import scala.math._
 import _root_.code.mymashi.{LuceneIndex, XmlSource}
+import xml.{Text, NodeSeq}
+import http.SHtml.BasicElemAttr
+import main.scala.code.mymashi.source.HtmlUtil
 
 
 case class Feed(var url: String, var keywords: String, var source: XmlSource = null) {
@@ -28,14 +31,16 @@ class AjaxTargetUrls extends Logger {
   private var urls = Vector(new Feed("", ""))
 
   def render(html: NodeSeq): NodeSeq = {
-    <div id="feeds">
-      { urls.flatMap(doFeed) }
-    </div> ++
-    renderAdd(("#feeds ^^" #> "^^")(html)) ++
-    SHtml.ajaxButton("update", () => {
-      SetHtml("results", renderResults)
-    }) ++
-    <div id="results" style="margin-top:30px" />
+    SHtml.ajaxForm(
+      <div id="feeds">
+        { urls.flatMap(doFeed) }
+      </div> ++
+      renderAdd(("#feeds ^^" #> "^^")(html)) ++
+      SHtml.ajaxSubmit("update", () => {
+        SetHtml("results", renderResults)
+      }) ++
+      <div id="results" style="margin-top:30px" />
+    )
   }
 
   private def renderAdd(node: NodeSeq) = {
@@ -49,16 +54,17 @@ class AjaxTargetUrls extends Logger {
   }
 
   private def doFeed(f: Feed) = {
-    <div id={f.guid}>
+    <div id={f.guid} class="infoSource">
       url: {
         SHtml.ajaxText(f.url, u => {
           if(u.length == 0) {
             Noop
           } else if(checkUrl(u, f)) {
-            f.source.content match {
-              case Some(c) => {
-                LuceneIndex.indexSource(f)
-                SetValById(f.guid+"_url", Str(f.url)) & SetHtml(f.guid+"_err", NodeSeq.Empty)
+            Source.toSource(f.url, f.source.content) match {
+              case Some(newsSource) => {
+                LuceneIndex.indexSource(newsSource)
+                SetValById(f.guid+"_url", Str(f.url)) & //SetElemById(f.guid+"_sources", Seq(("a", "a"))) &
+                  SetHtml(f.guid+"_err", NodeSeq.Empty)
               }
               case None => SetValById(f.guid+"_url", Str(f.url)) & SetHtml(f.guid+"_err", Text("Couldn't load Source"))
             }
@@ -66,7 +72,7 @@ class AjaxTargetUrls extends Logger {
             SetValById(f.guid+"_url", Str(f.url)) & SetHtml(f.guid+"_err", Text("URL not valid"))
           }
         },
-        "id" -> (f.guid+"_url"), "size" -> "30")
+        new BasicElemAttr("id", f.guid+"_url"), new BasicElemAttr("size", "30"))
       }
       keywords: {
         SHtml.ajaxText(f.keywords, k => {
@@ -79,6 +85,9 @@ class AjaxTargetUrls extends Logger {
             After(TimeSpan(500), Replace(f.guid, NodeSeq.Empty))
         })
       }
+      { //<br />
+      // information sources {SHtml.select(Seq(), Empty, _ => {}, new BasicElemAttr("id", (f.guid+"_sources"))) }
+      }
       <span id={f.guid+"_err"} style="color:red" />
     </div>
   }
@@ -90,13 +99,21 @@ class AjaxTargetUrls extends Logger {
       .sortWith((i1, i2) => sort(i1,i2)).flatMap(_.toHtml)
   }
 
+/*  def buildQuery(current: String, limit: Int)(url: String): Seq[String] = {
+    InformationSource.findAll(
+    Like(InformationSource.url,(current + "%")),
+    OrderBy(InformationSource.url,Ascending),
+    MaxRows(limit)
+    ).map( _.url.is)
+  }*/
+
   private def checkUrl(url: String, feed: Feed): Boolean = {
     if(url.equals("")) return true
 
-    feed.url = url
+    feed.url = HtmlUtil.unescape(url)
 
-    if(!url.startsWith("http://")) {
-      feed.url = "http://"+url
+    if(!(url.startsWith("http://") || url.startsWith("https://"))) {
+      feed.url = "http://"+HtmlUtil.unescape(url)
     }
 
     feed.source = new XmlSource(feed.url)

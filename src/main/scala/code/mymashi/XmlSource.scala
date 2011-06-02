@@ -1,4 +1,4 @@
-package code.mymashi {
+package code.mymashi;
 
 /**
  * Created by IntelliJ IDEA.
@@ -8,16 +8,14 @@ package code.mymashi {
  * To change this template use File | Settings | File Templates.
  */
 
-
 import java.net._
 import xml._
-import java.util.Date
-import net.liftweb.common.{Full, Empty, Box, Logger}
+import net.liftweb.common.Logger
+import java.io.IOException
 
 class XmlSource(source: String) extends Logger {
   private val url = new URL(source)
-  private var lastModified: Long = 0
-  private var data: Node = _
+  private var data: Elem = _
 
   def exists = try {
     url.openConnection match {
@@ -31,44 +29,28 @@ class XmlSource(source: String) extends Logger {
     case _ => false
   }
 
-  def checkUpdate = try {
-    url.openConnection match {
-      case con: HttpURLConnection => {
-        con.setRequestMethod("HEAD")
-        (con.getLastModified > lastModified)
-      }
-      case _ => false
-    }
-  } catch {
-    case _ => false
-  }
+  def escape: String = {
+    val con = url.openConnection
+    con.setConnectTimeout(5000)
 
-  def updated = new Date(lastModified)
+    val tmp = scala.io.Source.fromInputStream(con.getInputStream).mkString
+    // TODO: remove some stuff from String
+    tmp
+  }
 
   def content: Option[Node] = try {
-    url.openConnection match {
-      case con: HttpURLConnection => {
-        con.setRequestMethod("HEAD")
+    data = XML.loadString(escape)
 
-        if(con.getLastModified > lastModified) {
-          lastModified = con.getLastModified
-          data = XML.load(url)
-        }
-
-        if(data == null) {
-          error("XML.load returns NULL")
-          None
-        } else {
-          Some(data)
-        }
-      }
-      case _ => error("Connection to '"+url.toString+"' couldn't be established!"); None
+    if(data == null) {
+      error("XML.load returns NULL")
+      None
+    } else {
+      Some(data)
     }
   } catch {
-    case e => error(e.toString); None
+    case ioX: IOException => error("IOException: "+ioX.getMessage); ioX.printStackTrace; None
+    case spX: SAXParseException => error("SAXParseException: "+spX.getMessage); None
+    case e: Exception => error(e.getClass.getCanonicalName+": "+e.getMessage); None
   }
-
-
 }
 
-}

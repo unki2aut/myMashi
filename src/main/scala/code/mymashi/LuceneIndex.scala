@@ -32,49 +32,39 @@ object LuceneIndex extends Logger {
   private val indexDir = FSDirectory.open(indexFile)
   private val analyzer = new StandardAnalyzer(Version.LUCENE_31)
 
-  def indexSource(feed: Feed) {
+  def indexSource(newsSrc: Source) {
     try {
       val iw = new IndexWriter(indexDir, new IndexWriterConfig(Version.LUCENE_31, analyzer).
                     setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND))
 
-      iw.maybeMerge
+      //iw.maybeMerge
 
-      info("index feed: "+feed)
+      info("index feed: "+newsSrc)
 
-      InformationSource.find(By(InformationSource.url, feed.url)) match {
+      InformationSource.find(By(InformationSource.url, newsSrc.url)) match {
         case Full(infoSrc) => {
-          info("found feed: "+infoSrc.url+"")
+          info("found feed: "+newsSrc.url+"")
 
-          info("feed.updated: "+feed.source.updated+", db.updated: "+infoSrc.updated.get)
+          info("feed.updated: "+newsSrc.updated+", db.updated: "+infoSrc.updated.get)
 
-          if (feed.source.updated.after(infoSrc.updated.get)) {
+          if (newsSrc.updated.after(infoSrc.updated.get)) {
             // store only new items
-            Source.toSource(feed.url, feed.source.content) match {
-              case Some(src) =>  {
-                src.listItems.filter(_.updated.after(infoSrc.updated.get)).
+            newsSrc.listItems.filter(_.updated.after(infoSrc.updated.get)).
                   foreach(x => iw.addDocument(infoToLuceneDoc(x), analyzer))
 
-                // update updated in DB
-                infoSrc.updated(src.updated)
-                infoSrc.save
-              }
-              case None => Unit
-            }
+            // update updated in DB
+            infoSrc.updated(newsSrc.updated)
+            infoSrc.save
           } else {
             info("feed is up to date")
           }
         }
         case Empty => {
           // source not found -> store it
-          Source.toSource(feed.url, feed.source.content) match {
-            case Some(src) => {
-              src.insertDb
-              info("insert into DB")
+          newsSrc.insertDb
+          info("insert into DB")
 
-              src.listItems.foreach(x => iw.addDocument(infoToLuceneDoc(x), analyzer))
-            }
-            case None => info("content was no valid source"); Unit // no source found
-          }
+          newsSrc.listItems.foreach(x => iw.addDocument(infoToLuceneDoc(x), analyzer))
         }
         case _ => info("some problem with finding the feed url"); Unit // source found, but nothing to update
       }
