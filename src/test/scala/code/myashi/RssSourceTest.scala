@@ -21,7 +21,7 @@ class RssSourceTest extends AssertionsForJUnit {
 
   @Test
   def rssSourceTest {
-    Source.toSource(TestData.url, Some(TestData.node)) match {
+    Source.toSource(TestData.url, Some(TestData.node), 0l) match {
       case Some(rss: RssSource) => {
         assertEquals(TestData.url, rss.url)
         assertEquals("Liftoff News", rss.title)
@@ -40,7 +40,7 @@ class RssSourceTest extends AssertionsForJUnit {
 
   @Test
   def rssItemTest {
-    Source.toSource(TestData.url, Some(TestData.node)) match {
+    Source.toSource(TestData.url, Some(TestData.node), 0l) match {
       case Some(rss: RssSource) => {
         for(item <- rss.listItems) {
           assertTrue(item.guid.startsWith("http://liftoff.msfc.nasa.gov/"))

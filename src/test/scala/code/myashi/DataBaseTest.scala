@@ -31,7 +31,7 @@ class DataBaseTest extends AssertionsForJUnit {
 
   @Test
   def inserUrlTest {
-    Source.toSource(TestData.url, Some(TestData.node)) match {
+    Source.toSource(TestData.url, Some(TestData.node), 0l) match {
       case Some(s: Source) => s.insertDb
       case None => fail("source is no RSS-Source!")
     }
@@ -39,7 +39,7 @@ class DataBaseTest extends AssertionsForJUnit {
 
   @Test
   def findUrlTest {
-    Source.toSource(TestData.url, Some(TestData.node)) match {
+    Source.toSource(TestData.url, Some(TestData.node), 0l) match {
       case Some(rs) => InformationSource.find(By(InformationSource.url, TestData.url)) match {
         case Full(is: InformationSource) => assertEquals(TestData.url, is.url.get)
         case _ => fail("source not found!")
@@ -50,7 +50,7 @@ class DataBaseTest extends AssertionsForJUnit {
 
   @Test
   def deleteUrlTest {
-    Source.toSource(TestData.url, Some(TestData.node)) match {
+    Source.toSource(TestData.url, Some(TestData.node), 0l) match {
       case Some(rs) => InformationSource.find(By(InformationSource.url, TestData.url)) match {
         case Full(is: InformationSource) => is.delete_!
         case _ => fail("source not found!")

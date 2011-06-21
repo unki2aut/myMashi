@@ -29,13 +29,6 @@ class XmlSourceTest extends AssertionsForJUnit {
   }
 
   @Test
-  def checkUpdateTest {
-    assertTrue(source.checkUpdate)
-    assertFalse(source.content.isEmpty)
-    assertFalse(source.checkUpdate)
-  }
-
-  @Test
   def checkContent {
     source.content match {
       case Some(n) => {

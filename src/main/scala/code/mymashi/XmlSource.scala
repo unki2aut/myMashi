@@ -16,6 +16,7 @@ import java.io.IOException
 class XmlSource(source: String) extends Logger {
   private val url = new URL(source)
   private var data: Elem = _
+  var lastModified = 0l
 
   def exists = try {
     url.openConnection match {
@@ -29,17 +30,18 @@ class XmlSource(source: String) extends Logger {
     case _ => false
   }
 
-  def escape: String = {
+   def fetch: String = {
     val con = url.openConnection
-    con.setConnectTimeout(5000)
+    lastModified = con.asInstanceOf[HttpURLConnection].getLastModified
+    val in = con.getInputStream
+    val tmp = scala.io.Source.fromInputStream(in).mkString
+    in.close
 
-    val tmp = scala.io.Source.fromInputStream(con.getInputStream).mkString
-    // TODO: remove some stuff from String
     tmp
   }
 
   def content: Option[Node] = try {
-    data = XML.loadString(escape)
+    data = XML.loadString(this.fetch)
 
     if(data == null) {
       error("XML.load returns NULL")

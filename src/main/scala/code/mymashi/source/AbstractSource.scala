@@ -45,14 +45,14 @@ abstract class Source {
 }
 
 object Source {
-  def toSource(url: String, node: Option[Node]): Option[Source] = {
+  def toSource(url: String, node: Option[Node], lastModified: Long): Option[Source] = {
     node match {
       case Some(root) => (root, root.label, root.scope.uri) match {
         case (html, "html", _) => None // TODO:
-        case (rss, "rss", _) => Some(new RssSource(url, root))
-        case (rss, _, uri) if uri.startsWith("http://purl.org/rss/") => Some(new RssSource(url, root))
-        case (rss, "RDF", _) if (rss \ "channel").nonEmpty => Some(new RssSource(url, root))
-        case (atom, "feed", _) => Some(new AtomSource(url, root))
+        case (rss, "rss", _) => Some(new RssSource(url, root, lastModified))
+        case (rss, _, uri) if uri.startsWith("http://purl.org/rss/") => Some(new RssSource(url, root, lastModified))
+        case (rss, "RDF", _) if (rss \ "channel").nonEmpty => Some(new RssSource(url, root, lastModified))
+        case (atom, "feed", _) => Some(new AtomSource(url, root, lastModified))
         case (other, _, _) => None
       }
       case _ => None
@@ -60,7 +60,7 @@ object Source {
   }
 
   def toImage(node: NodeSeq): String = if(node nonEmpty) node text else "images/news.ico"
-  def toDate(node: NodeSeq): Date = if(node nonEmpty) DateParser.parseDate(node text) else TimeHelpers.now
+  def toDate(node: NodeSeq, lastModified: Long): Date = if(node nonEmpty) DateParser.parseDate(node text) else new Date(lastModified)
   def filterItems(node: NodeSeq, itemLabel: String): NodeSeq = node.head match {
     case e: Elem => {
       // TODO: nicht sehr sauber!!
