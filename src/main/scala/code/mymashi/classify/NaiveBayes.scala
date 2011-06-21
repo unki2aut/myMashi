@@ -41,9 +41,9 @@ class NaiveBayes(val tSet: TrainingSet) {
       val d = dislike.get(word) orElse Some(0.0) get
 
       if(d == 0 && l != 0) { // in like only
-        list = 0.99 :: list
+        list = (if(l > 10) 0.99 else 0.9) :: list
       } else if(l == 0 && d != 0) { // in dislike only
-        list = 0.01 :: list
+        list = (if(d > 10) 0.01 else 0.1) :: list
       } else if (l+d > 5) { // only if relevant enough
         val like_factor = l / like.size
         val dislike_factor = d / dislike.size

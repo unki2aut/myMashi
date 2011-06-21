@@ -71,9 +71,16 @@ class NaiveBayesTest extends AssertionsForJUnit {
   def classifySet {
     val nb = new NaiveBayes(tSet)
 
+    println("t1: "+nb.classify(t1))
     assertTrue(nb.classify(t1) > 0.9)
+
+    println("like: "+nb.classify(like))
     assertTrue(nb.classify(like) > 0.9)
+
+    println("dislike: "+nb.classify(dislike))
     assertTrue(nb.classify(dislike) < 0.1)
+
+    println("ok: "+nb.classify(ok))
     assertTrue(nb.classify(ok) > 0.5)
   }
 
