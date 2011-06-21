@@ -60,7 +60,7 @@ class AjaxTargetUrls extends Logger {
           if(u.length == 0) {
             Noop
           } else if(checkUrl(u, f)) {
-            Source.toSource(f.url, f.source.content) match {
+            Source.toSource(f.url, f.source.content, f.source.lastModified) match {
               case Some(newsSource) => {
                 LuceneIndex.indexSource(newsSource)
                 SetValById(f.guid+"_url", Str(f.url)) & //SetElemById(f.guid+"_sources", Seq(("a", "a"))) &
