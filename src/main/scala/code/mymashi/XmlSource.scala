@@ -11,12 +11,16 @@ package code.mymashi;
 import java.net._
 import xml._
 import net.liftweb.common.Logger
-import java.io.IOException
+import org.ccil.cowan.tagsoup.jaxp.SAXParserImpl
+import java.io.{InputStreamReader, IOException}
 
 class XmlSource(source: String) extends Logger {
   private val url = new URL(source)
   private var data: Elem = _
   var lastModified = 0l
+
+  val features = new java.util.HashMap[String, Boolean]
+  val parser = SAXParserImpl.newInstance(features.asInstanceOf[java.util.HashMap[_, _]])
 
   def exists = try {
     url.openConnection match {
@@ -30,18 +34,13 @@ class XmlSource(source: String) extends Logger {
     case _ => false
   }
 
-   def fetch: String = {
+  def content: Option[Node] = try {
     val con = url.openConnection
     lastModified = con.asInstanceOf[HttpURLConnection].getLastModified
-    val in = con.getInputStream
-    val tmp = scala.io.Source.fromInputStream(in).mkString
-    in.close
+    val stream = con.getInputStream
+    val input = new InputSource(new XmlUnescapeReader(new InputStreamReader(stream)))
 
-    tmp
-  }
-
-  def content: Option[Node] = try {
-    data = XML.loadString(this.fetch)
+    data = XML.loadXML(input, parser)
 
     if(data == null) {
       error("XML.load returns NULL")
