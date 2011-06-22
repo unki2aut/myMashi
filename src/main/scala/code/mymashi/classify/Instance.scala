@@ -18,7 +18,7 @@ class Instance(val label: String, val like: Boolean, private val fields: collect
       })
   }
 
-  def freq: collection.mutable.Map[String, Double] = {
+  val freq: collection.mutable.Map[String, Double] = {
     val f = collection.mutable.Map.empty[String, Double]
 
     fields.foreach {

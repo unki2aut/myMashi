@@ -33,28 +33,32 @@ class NaiveBayes(val tSet: TrainingSet) {
     learn(instance)
   }
 
-  def classify(i: Instance): Double = {
-    var list = List.empty[Double]
+  def classify(instance: Instance): Double = {
+    var m = List.empty[Double]
 
-    i.freq.keys.foreach(word => {
-      val l = 2 * (like.get(word) orElse Some(0.0) get)
-      val d = dislike.get(word) orElse Some(0.0) get
+    instance.freq.keys.foreach(word => {
+      val l = 2.0 * (like.get(word) orElse(Some(0.0)) get)
+      val d = dislike.get(word) orElse(Some(0.0)) get
 
       if(d == 0 && l != 0) { // in like only
-        list = (if(l > 10) 0.99 else 0.9) :: list
+        val p = if(l > 10) 0.99 else 0.9
+        m = p :: m
       } else if(l == 0 && d != 0) { // in dislike only
-        list = (if(d > 10) 0.01 else 0.1) :: list
+        val p = if(d > 10) 0.01 else 0.1
+        m = p :: m
       } else if (l+d > 5) { // only if relevant enough
         val like_factor = l / like.size
         val dislike_factor = d / dislike.size
         val p = like_factor / (like_factor + dislike_factor)
-        list = p :: list
+        m = p :: m
       }
     })
 
-    val p_list = list.sorted.reverse.take(15)
+    // i = Abs(0.5 - p)
+    // only keep the 15 highest "interesting" factors
+    val p_list = m.sortWith((a, b) => (0.5 - a).abs > (0.5 - b).abs).take(15)
 
-    //println("classify - p_list: "+p_list)
+    println("classify - p_list: "+p_list)
 
     NaiveBayes.combineProbabilities(p_list)
   }

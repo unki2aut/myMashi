@@ -9,8 +9,7 @@ package code.mymashi.classify
  */
 
 object GermanWordFilter {
-  //val words = collection.immutable.HashSet(
-  val words = Seq(
+  val words = collection.immutable.HashSet(
     // conjunctions
     "und", "weil", "deshalb", "darum", "deswegen", "aber", "denn", "sondern", "als",
     "wenn", "sobald", "sodass", "dass",
