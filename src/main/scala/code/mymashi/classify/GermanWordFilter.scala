@@ -12,7 +12,7 @@ object GermanWordFilter {
   val words = collection.immutable.HashSet(
     // conjunctions
     "und", "weil", "deshalb", "darum", "deswegen", "aber", "denn", "sondern", "als",
-    "wenn", "sobald", "sodass", "dass",
+    "wenn", "sobald", "sodass", "dass", "damit", "da", "falls", "obwohl", "bevor", "nachdem",
     // articles
     "der", "die", "das", "dem", "den", "des", "ein", "eine", "einer", "eines", "einem", "einen",
     // pronoun
@@ -28,10 +28,7 @@ object GermanWordFilter {
     "laut", "mangels", "mittels", "ob", "seitens", "unbeschadet", "ungeachtet",
     "vermittels", "vermöge", "zufolge", "zwecks", "abzüglich", "ausschließlich", "bis", "einschließlich",
     "entgegen", "exklusive", "inklusive", "mitsamt", "nebst", "samt", "statt", "wider",
-    "zuwider", "zuzüglich",
-    // conjunction
-    "damit", "da", "falls", "obwohl", "bevor", "nachdem"
-    )
+    "zuwider", "zuzüglich")
 
   def filter(list: List[String]): List[String] = {
     list.filterNot(words.contains)
