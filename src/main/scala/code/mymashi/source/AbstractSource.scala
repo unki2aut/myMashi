@@ -7,7 +7,8 @@ import com.sun.syndication.io.impl.DateParser
 import net.liftweb.util.TimeHelpers
 import xml._
 import net.liftweb.common.{Full, Box}
-import main.scala.code.mymashi.source.HtmlUtil
+import net.liftweb.json.Xml
+import com.sun.org.apache.xml.internal.security.utils.XMLUtils
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,10 +50,10 @@ object Source {
     node match {
       case Some(root) => (root, root.label, root.scope.uri) match {
         case (html, "html", _) => None // TODO:
-        case (rss, "rss", _) => Some(new RssSource(url, root, lastModified))
-        case (rss, _, uri) if uri.startsWith("http://purl.org/rss/") => Some(new RssSource(url, root, lastModified))
-        case (rss, "RDF", _) if (rss \ "channel").nonEmpty => Some(new RssSource(url, root, lastModified))
-        case (atom, "feed", _) => Some(new AtomSource(url, root, lastModified))
+        case (rss, "rss", _) => Some(new RssSource(url, rss, lastModified))
+        case (rss, _, uri) if uri.startsWith("http://purl.org/rss/") => Some(new RssSource(url, rss, lastModified))
+        case (rss, "RDF", _) if (rss \ "channel").nonEmpty => Some(new RssSource(url, rss, lastModified))
+        case (atom, "feed", _) => Some(new AtomSource(url, atom, lastModified))
         case (other, _, _) => None
       }
       case _ => None
@@ -80,19 +81,19 @@ class Item(val url: String,
            val cache: NodeSeq,
            val score: Float = 0) {
 
-  val content = HtmlUtil.extractText(c)
+  val content = XmlUtil.extractText(c)
 
   def toHtml: Node = {
     <div>
       <strong>
           <img src={image} height="16px" style="margin-left:5px; vertical-align:middle" />
-          <a href={link} target="_blank">{title}</a> on {formatDate} ({score})
+          <a href={link} target="_blank">{Unparsed(title)}</a> on {formatDate} ({score})
       </strong>
-      <p>{content}</p>
+      <p>{Unparsed(content)}</p>
     </div>
   }
 
-  override def toString = "title: "+title+", updated: "+storeDate+", url: "+url
+  override def toString = "title: "+title+", updated: "+storeDate+", link: "+link
 
   private def formatDate: String = {
     if(updated == null) {

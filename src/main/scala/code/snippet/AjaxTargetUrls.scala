@@ -16,7 +16,6 @@ import scala.math._
 import _root_.code.mymashi.{LuceneIndex, XmlSource}
 import xml.{Text, NodeSeq}
 import http.SHtml.BasicElemAttr
-import main.scala.code.mymashi.source.HtmlUtil
 
 
 case class Feed(var url: String, var keywords: String, var source: XmlSource = null) {
@@ -59,7 +58,7 @@ class AjaxTargetUrls extends Logger {
         SHtml.ajaxText(f.url, u => {
           if(u.length == 0) {
             Noop
-          } else if(checkUrl(u, f)) {
+          } else if(checkUrl(u.trim, f)) {
             Source.toSource(f.url, f.source.content, f.source.lastModified) match {
               case Some(newsSource) => {
                 LuceneIndex.indexSource(newsSource)
@@ -110,10 +109,10 @@ class AjaxTargetUrls extends Logger {
   private def checkUrl(url: String, feed: Feed): Boolean = {
     if(url.equals("")) return true
 
-    feed.url = HtmlUtil.unescape(url)
+    feed.url = XmlUtil.unescape(url)
 
     if(!(url.startsWith("http://") || url.startsWith("https://"))) {
-      feed.url = "http://"+HtmlUtil.unescape(url)
+      feed.url = "http://"+XmlUtil.unescape(url)
     }
 
     feed.source = new XmlSource(feed.url)

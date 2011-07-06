@@ -9,6 +9,7 @@ package code.mymashi;
  */
 
 import java.net._
+import source.XmlUtil
 import xml._
 import net.liftweb.common.Logger
 import org.ccil.cowan.tagsoup.jaxp.SAXParserImpl
@@ -18,9 +19,6 @@ class XmlSource(source: String) extends Logger {
   private val url = new URL(source)
   private var data: Elem = _
   var lastModified = 0l
-
-  val features = new java.util.HashMap[String, Boolean]
-  val parser = SAXParserImpl.newInstance(features.asInstanceOf[java.util.HashMap[_, _]])
 
   def exists = try {
     url.openConnection match {
@@ -37,10 +35,8 @@ class XmlSource(source: String) extends Logger {
   def content: Option[Node] = try {
     val con = url.openConnection
     lastModified = con.asInstanceOf[HttpURLConnection].getLastModified
-    val stream = con.getInputStream
-    val input = new InputSource(new XmlUnescapeReader(new InputStreamReader(stream)))
-
-    data = XML.loadXML(input, parser)
+    //data = XML.loadXML(new InputSource(con.getInputStream), XmlUtil.parser)
+    data = XML.load(con.getInputStream)
 
     if(data == null) {
       error("XML.load returns NULL")
