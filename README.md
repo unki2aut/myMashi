@@ -6,7 +6,9 @@ mainpage ordererd by date and weight. I started to only collect data from
 RSS feeds but it is ment to get data from almost any source in the web.
 myMashi should also be user-based, so every user can have his/her own little
 mashi.
+
 The weighting is done in two steps:
+
 1. the user sets some keywords for a source of things he would be insterested in
 2. the user uses a like-button to train a bayesian-classifier
 
